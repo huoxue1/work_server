@@ -1,0 +1,37 @@
+POST http://localhost:8083/admin/get_zip_result/4
+Content-Type: application/json
+
+{}
+
+###
+POST http://localhost:8083/public/upload
+Content-Type: application/json
+
+{
+  "data": "MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTE=",
+  "work_id": 1,
+  "file_name": "小火.txt",
+  "size": 11231,
+  "token": "131"
+}
+
+###
+POST http://localhost:8083/public/get_files/1
+Content-Type: application/json
+
+{}
+
+###
+POST http://localhost:8083/admin/create_work?token=qqewqeqdadadadd
+Content-Type: application/json
+
+{
+  "name": "路由与交换技术第3题",
+  "end_time": 1638073800
+}
+
+###
+POST http://localhost:8083/public/get_works
+Content-Type: application/json
+
+
