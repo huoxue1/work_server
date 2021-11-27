@@ -21,7 +21,7 @@ func init() {
 }
 
 func main() {
-	if err := router.InitRouter().Run("127.0.0.1:8085"); err != nil {
+	if err := router.InitRouter().Run("0.0.0.0:8085"); err != nil {
 		log.Panicln(err.Error())
 	}
 }
