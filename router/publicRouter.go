@@ -12,4 +12,6 @@ func publicRouter(group *gin.RouterGroup) {
 	group.POST("/get_files/:work_id", controller.GwtFiles())
 	group.POST("/get_work/:work_id", controller.GetWork())
 	group.POST("/get_file/:file_id", controller.GetFile())
+
+	group.POST("/remove_file/:file_id", controller.RemoveFile())
 }

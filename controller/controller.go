@@ -14,6 +14,14 @@ import (
 	"work_server/util"
 )
 
+var (
+	TOKEN = "qqewqeqdadadadd"
+)
+
+func SetToken(token string) {
+	TOKEN = token
+}
+
 // CreateWork
 /**
  * @Description: 创建一个项目
@@ -35,7 +43,6 @@ func CreateWork() gin.HandlerFunc {
 		}
 		util.CheckDir("./work/" + work.Name + "/")
 		context.JSON(200, ok(200, nil))
-
 	}
 }
 
@@ -55,36 +62,55 @@ func Upload() gin.HandlerFunc {
 		p.Data = ""
 		db := dao.GetDB()
 		p2 := new(pojo.Files)
-		exist, err := db.Where("work_id=? and file_name=?", p.WorkID, p.FileName).Exist(p2)
-		if exist {
-			_, err := db.Where("work_id=? and file_name=?", p.WorkID, p.FileName).Get(p2)
+		session := db.NewSession()
+		defer session.Close()
+		defer func() {
+			err := recover()
 			if err != nil {
+				_ = session.Rollback()
+			}
+		}()
+		exist, err := session.Where("work_id=? and file_name=?", p.WorkID, p.FileName).Exist(p2)
+		if exist {
+			_, err := session.Where("work_id=? and file_name=?", p.WorkID, p.FileName).Get(p2)
+			if err != nil {
+				session.Rollback()
 				return
 			}
-			_, err = db.ID(p2.Id).Update(p)
+			_, err = session.ID(p2.Id).Update(p)
 			if err != nil {
+				session.Rollback()
 				log.Errorln(err.Error())
 				return
 			}
 		} else {
-			_, err = db.Insert(p)
+			_, err = session.Insert(p)
 			if err != nil {
+				session.Rollback()
 				return
 			}
 		}
 
 		w := new(pojo.Work)
-		_, err = db.ID(p.WorkID).Get(w)
+		_, err = session.ID(p.WorkID).Get(w)
 		if err != nil {
+			session.Rollback()
 			return
 		}
 		data, err := base64.StdEncoding.DecodeString(content)
 		if err != nil {
+			session.Rollback()
 			return
 		}
 		util.CheckDir("./work/" + w.Name + "/")
 		err = os.WriteFile("./work/"+w.Name+"/"+p.FileName, data, 0666)
 		if err != nil {
+			session.Rollback()
+			return
+		}
+		err = session.Commit()
+		if err != nil {
+			session.Rollback()
 			return
 		}
 		context.JSON(200, ok(200, nil))
@@ -201,5 +227,52 @@ func GetZipResult() gin.HandlerFunc {
 		context.Writer.Header().Add("Content-Type", "application/octet-stream")
 		context.File("./temp/" + work.Name + ".zip")
 		defer os.Remove("./temp/" + work.Name + ".zip")
+	}
+}
+
+func RemoveFile() gin.HandlerFunc {
+	return func(context *gin.Context) {
+		param := context.Param("file_id")
+		token := context.Query("token")
+		fileId, _ := strconv.Atoi(param)
+		db := dao.GetDB()
+		session := db.NewSession()
+		defer session.Close()
+		file := new(pojo.Files)
+		_, err := session.ID(fileId).Get(file)
+		if err != nil {
+			session.Rollback()
+			return
+		}
+		if token != file.Token && token != TOKEN {
+			context.JSON(404, response{
+				Code:  404,
+				Msg:   "token check failed",
+				Data:  nil,
+				Error: "token check failed",
+			})
+			return
+		}
+		_, err = session.ID(fileId).Delete(file)
+		if err != nil {
+			session.Rollback()
+			return
+		}
+		work := new(pojo.Work)
+		_, err = db.ID(file.WorkID).Get(work)
+		if err != nil {
+			session.Rollback()
+			return
+		}
+		err = os.Remove("./work/" + work.Name + "/" + file.FileName)
+		if err != nil {
+			session.Rollback()
+			return
+		}
+		err = session.Commit()
+		if err != nil {
+			session.Rollback()
+			return
+		}
 	}
 }

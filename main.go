@@ -1,10 +1,13 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
 
+	"work_server/controller"
 	_ "work_server/dao"
 	"work_server/router"
 	"work_server/util"
@@ -20,8 +23,22 @@ func init() {
 	}
 }
 
+var (
+	token string
+	port  int
+)
+
+func init() {
+	flag.StringVar(&token, "t", "qqewqeqdadadadd", "set a token")
+	flag.IntVar(&port, "p", 8085, "set port")
+	flag.Parse()
+
+	controller.SetToken(token)
+	router.SetToken(token)
+}
+
 func main() {
-	if err := router.InitRouter().Run("0.0.0.0:8085"); err != nil {
+	if err := router.InitRouter().Run(fmt.Sprintf("0.0.0.0:%d", port)); err != nil {
 		log.Panicln(err.Error())
 	}
 }

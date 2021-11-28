@@ -7,7 +7,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//go:embed view
+var (
+	TOKEN = "qqewqeqdadadadd"
+)
+
+func SetToken(token string) {
+	TOKEN = token
+}
+
+//go:embed view/dist
 var static embed.FS
 
 // InitRouter
@@ -21,6 +29,9 @@ func InitRouter() *gin.Engine {
 	engine.Use(cors())
 
 	engine.StaticFS("/static", http.FS(static))
+	engine.GET("/", func(context *gin.Context) {
+		context.Redirect(301, "/static/view/dist/home.html")
+	})
 	// 公共接口
 	public := engine.Group("/public")
 	publicRouter(public)
@@ -28,7 +39,7 @@ func InitRouter() *gin.Engine {
 	// 管理员接口
 	admin := engine.Group("/admin", func(context *gin.Context) {
 		token := context.Query("token")
-		if token == "qqewqeqdadadadd" {
+		if token == TOKEN {
 			context.Next()
 		} else {
 			context.Abort()
