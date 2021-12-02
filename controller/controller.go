@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/base64"
-	"fmt"
 	"os"
 	"strconv"
 
@@ -20,30 +19,6 @@ var (
 
 func SetToken(token string) {
 	TOKEN = token
-}
-
-// CreateWork
-/**
- * @Description: 创建一个项目
- * @return gin.HandlerFunc
- */
-func CreateWork() gin.HandlerFunc {
-	return func(context *gin.Context) {
-		work := new(pojo.Work)
-		err := context.BindJSON(work)
-		if err != nil {
-			log.Errorln("绑定数据失败")
-			log.Errorln(err.Error())
-			return
-		}
-		db := dao.GetDB()
-		_, err = db.Insert(work)
-		if err != nil {
-			return
-		}
-		util.CheckDir("./work/" + work.Name + "/")
-		context.JSON(200, ok(200, nil))
-	}
 }
 
 // Upload
@@ -203,76 +178,5 @@ func GwtFiles() gin.HandlerFunc {
 			Data:  files,
 			Error: "",
 		})
-	}
-}
-
-func GetZipResult() gin.HandlerFunc {
-	return func(context *gin.Context) {
-		workId, b := context.Params.Get("work_id")
-		if !b {
-			return
-		}
-		id, _ := strconv.Atoi(workId)
-		db := dao.GetDB()
-		work := new(pojo.Work)
-		_, err := db.ID(id).Get(work)
-		if err != nil {
-			return
-		}
-		err = util.Zip("./work/"+work.Name+"/", "./temp/"+work.Name+".zip")
-		if err != nil {
-			return
-		}
-		context.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s", work.Name+".zip")) //fmt.Sprintf("attachment; filename=%s", filename)对下载的文件重命名
-		context.Writer.Header().Add("Content-Type", "application/octet-stream")
-		context.File("./temp/" + work.Name + ".zip")
-		defer os.Remove("./temp/" + work.Name + ".zip")
-	}
-}
-
-func RemoveFile() gin.HandlerFunc {
-	return func(context *gin.Context) {
-		param := context.Param("file_id")
-		token := context.Query("token")
-		fileId, _ := strconv.Atoi(param)
-		db := dao.GetDB()
-		session := db.NewSession()
-		defer session.Close()
-		file := new(pojo.Files)
-		_, err := session.ID(fileId).Get(file)
-		if err != nil {
-			session.Rollback()
-			return
-		}
-		if token != file.Token && token != TOKEN {
-			context.JSON(404, response{
-				Code:  404,
-				Msg:   "token check failed",
-				Data:  nil,
-				Error: "token check failed",
-			})
-			return
-		}
-		_, err = session.ID(fileId).Delete(file)
-		if err != nil {
-			session.Rollback()
-			return
-		}
-		work := new(pojo.Work)
-		_, err = db.ID(file.WorkID).Get(work)
-		if err != nil {
-			session.Rollback()
-			return
-		}
-		err = os.Remove("./work/" + work.Name + "/" + file.FileName)
-		if err != nil {
-			session.Rollback()
-			return
-		}
-		err = session.Commit()
-		if err != nil {
-			session.Rollback()
-			return
-		}
 	}
 }

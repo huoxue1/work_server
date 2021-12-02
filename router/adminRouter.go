@@ -10,4 +10,6 @@ func adminRouter(group *gin.RouterGroup) {
 	group.POST("/create_work", controller.CreateWork())
 
 	group.GET("/get_zip_result/:work_id", controller.GetZipResult())
+
+	group.POST("/delete_work/:work_id", controller.DeleteWork())
 }

@@ -36,5 +36,9 @@ module.exports = {
     create_work:async function(data){
         let resp = await axios.post(this.base+"/admin/create_work?token="+this.get_token(),data)
         return resp.data
+    },
+    delete_work:async function(id){
+        let resp = await axios.post(this.base+"/admin/delete_work/"+id+"?token="+this.get_token())
+        return resp.data
     }
 }
