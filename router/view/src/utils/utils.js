@@ -14,12 +14,11 @@ module.exports = {
             return ''
         }
     },
+
     get_size:function getfilesize(size) {
         if (!size)
             return "";
-
         const num = 1024.00; //byte
-
         if (size < num)
             return size + "B";
         if (size < Math.pow(num, 2))
@@ -30,6 +29,7 @@ module.exports = {
             return (size / Math.pow(num, 3)).toFixed(2) + "G"; //G
         return (size / Math.pow(num, 4)).toFixed(2) + "T"; //T
     },
+
     fileToBase64: function (file,callback) {
         let reader = new FileReader();
         // 传入一个参数对象即可得到基于该参数对象的文本内容
