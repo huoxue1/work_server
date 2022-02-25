@@ -4,7 +4,7 @@ type Work struct {
 	Id      int64  `json:"id" xorm:"'id' pk autoincr"`
 	Name    string `json:"name" xorm:"'name'"`
 	EndTime int64  `json:"end_time" xorm:"'end_time'"` //nolint:tagliatelle
-	Created int64  `json:"created" xorm:"created"`     //nolint:gofmt
+	Created int64  `json:"created" xorm:"created"`
 	Deleted int64  `json:"deleted" xorm:"deleted"`
 }
 type Files struct {

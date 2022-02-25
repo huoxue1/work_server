@@ -26,11 +26,13 @@ func init() {
 var (
 	token string
 	port  int
+	ssl   bool
 )
 
 func init() {
 	flag.StringVar(&token, "t", "qqewqeqdadadadd", "set a token")
 	flag.IntVar(&port, "p", 8085, "set port")
+	flag.BoolVar(&ssl, "use a ssl", false, "use a ssl")
 	flag.Parse()
 
 	controller.SetToken(token)
@@ -38,7 +40,13 @@ func init() {
 }
 
 func main() {
-	if err := router.InitRouter().Run(fmt.Sprintf("0.0.0.0:%d", port)); err != nil {
-		log.Panicln(err.Error())
+	if ssl {
+		if err := router.InitRouter().RunTLS(fmt.Sprintf("0.0.0.0:%d", port), "key.pem", "key.key"); err != nil {
+			log.Panicln(err.Error())
+		}
+	} else {
+		if err := router.InitRouter().Run(fmt.Sprintf("0.0.0.0:%d", port)); err != nil {
+			log.Panicln(err.Error())
+		}
 	}
 }
