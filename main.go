@@ -32,7 +32,7 @@ var (
 func init() {
 	flag.StringVar(&token, "t", "qqewqeqdadadadd", "set a token")
 	flag.IntVar(&port, "p", 8085, "set port")
-	flag.BoolVar(&ssl, "use a ssl", false, "use a ssl")
+	flag.BoolVar(&ssl, "ssl", false, "use a ssl")
 	flag.Parse()
 
 	controller.SetToken(token)
