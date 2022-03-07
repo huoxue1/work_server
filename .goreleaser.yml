@@ -7,7 +7,7 @@ builds:
 
   - id: nowin
     env:
-      - CGO_ENABLED=0
+      - CGO_ENABLED=1
       - GO111MODULE=on
     goos:
       - linux
