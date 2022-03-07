@@ -5,7 +5,7 @@ echo "文件下载完毕，开始解压文件"
 tar -xzvf work_server_linux_amd64.tar.gz
 chmod -R 777 ./work_server
 read -p "请输入程序运行的端口号：" port
-echo "你的程序端口为："+port
+echo "你的程序端口为："+$port
 read -p "请输入你的token: " token
-echo "你的token为："+token
+echo "你的token为："+$token
 nohup ./work_server -p $port -t $token >work.log 2>&1 & echo $!>pid.pid
