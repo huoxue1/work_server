@@ -8,4 +8,4 @@ read -p "请输入程序运行的端口号：" port
 echo "你的程序端口为："+port
 read -p "请输入你的token: " token
 echo "你的token为："+token
-nohup ./work_server -p $port -t $token >work.log 2&1 & echo $!>pid.pid
+nohup ./work_server -p $port -t $token >work.log 2>&1 & echo $!>pid.pid
