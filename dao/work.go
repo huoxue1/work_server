@@ -1,7 +1,7 @@
 package dao
 
 import ( //nolint:gci
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/fumiama/sqlite3"
 	log "github.com/sirupsen/logrus"
 	"xorm.io/xorm"
 

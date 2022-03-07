@@ -32,6 +32,9 @@ func InitRouter() *gin.Engine {
 	engine.GET("/", func(context *gin.Context) {
 		context.Redirect(301, "/static/view/dist/home.html")
 	})
+	engine.POST("/up", func(context *gin.Context) {
+		context.JSON(403, nil)
+	})
 	// 公共接口
 	public := engine.Group("/public")
 	publicRouter(public)
