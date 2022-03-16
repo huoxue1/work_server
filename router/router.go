@@ -35,6 +35,14 @@ func InitRouter() *gin.Engine {
 	engine.POST("/up", func(context *gin.Context) {
 		context.JSON(403, nil)
 	})
+	engine.POST("/check_token", func(context *gin.Context) {
+		token := context.Query("token")
+		if token == TOKEN {
+			context.JSON(200, map[string]int{"code": 200})
+		} else {
+			context.JSON(200, map[string]int{"code": 403})
+		}
+	})
 	// 公共接口
 	public := engine.Group("/public")
 	publicRouter(public)

@@ -18,7 +18,10 @@ func init() {
 	util.CheckDir("./db/")
 	_, err := os.Stat("./db/data.db")
 	if err != nil {
-		os.Create("./db/data.db")
+		_, err := os.Create("./db/data.db")
+		if err != nil {
+			return
+		}
 		return
 	}
 }

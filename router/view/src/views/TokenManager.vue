@@ -1,7 +1,7 @@
 <template>
 <div style="width: 100%;height: 100%">
 <el-input class="data"  v-model="token" placeholder="请输入token" label="TOKEN:"/>
-  <el-button class="data" @click="click"   type="success">请绑定token</el-button>
+  <el-button class="data" @click="click"   type="success">绑定token</el-button>
 
 </div>
 </template>
@@ -23,7 +23,9 @@ export default {
   },
   created() {
     this.token = Api.get_token()
-  }
+  },
+
+
 }
 </script>
 

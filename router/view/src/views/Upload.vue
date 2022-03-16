@@ -13,12 +13,19 @@
         </el-option>
       </el-select>
     <el-upload
-        action="/up"
-        auto-upload="false"
-        :before-upload="upload"
+        :action="base+'/public/upload'"
+        :auto-upload="true"
+        :on-success="uploadSuccess"
+        :on-progress="upload"
+        :before-upload="beforeUpload"
+        :data="{'work_id':selected_work_id,'token':token}"
     >
       <el-button type="success" @click="upload">点击上传文件</el-button>
     </el-upload>
+    <el-drawer :model-value="draw.enable">
+      <span>{{this.draw.file_name}}</span>
+      <el-progress :percentage="draw.pro"></el-progress>
+    </el-drawer>
 
 
     <div style="float: right;margin-right: 100px">截至时间<el-link :href="link">：</el-link><span v-text="selected_work.end_time"></span></div>
@@ -45,6 +52,7 @@
 <script>
 import Api from "../utils/api";
 import Utils from "../utils/utils";
+import {ElMessage} from "element-plus";
 
 export default {
   name: "Upload",
@@ -55,7 +63,14 @@ export default {
       selected_work:{},
       files:[],
       link:"/admin/get_zip_result/"+this.selected_work_id+"?token="+localStorage.getItem("token"),
-      token:""
+      token:"",
+      base: Api.base,
+
+      draw:{
+        file_name: "",
+        enable: false,
+        pro: 0,
+      }
     }
   },
   watch:{
@@ -69,6 +84,7 @@ export default {
 
       Api.get_files(this.selected_work_id).then((resp)=>{
         this.files = resp
+        this.files.sort((a,b)=>{if (a.upload_time <= b.upload_time){return 1}else {return -1}})
         for (let i = 0; i < this.files.length; i++) {
           this.files[i].size = Utils.get_size(this.files[i].size)
           this.files[i].upload_time = Utils.format_time(this.files[i].upload_time)
@@ -88,6 +104,7 @@ export default {
       this.selected_work.end_time = Utils.format_time(this.selected_work.end_time,true)
       Api.get_files(data[0].id).then((resp)=>{
         this.files = resp
+        this.files.sort((a,b)=>{if (a.upload_time <= b.upload_time){return 1}else {return -1}})
         for (let i = 0; i < this.files.length; i++) {
           this.files[i].size = Utils.get_size(this.files[i].size)
           this.files[i].upload_time = Utils.format_time(this.files[i].upload_time)
@@ -102,38 +119,30 @@ export default {
     click:function () {
       alert(1)
     },
-    upload:async function (file) {
-      // let files = await window.showOpenFilePicker({
-      //   multiple: false,
-      // });
-      // let file = await files[0].getFile();
-      let upload = {}
-      Utils.fileToBase64(file,async (bs4) => {
-        upload.data = bs4.replace(/^data:.*?;base64,/, "")
-        upload.size = file.size
-        upload.file_name = file.name
-        upload.work_id = this.selected_work_id
-        upload.token = Api.get_token()
-        await Api.upload(upload)
-        Api.get_files(this.selected_work_id).then((resp)=>{
-          this.files = resp
-          for (let i = 0; i < this.files.length; i++) {
-            this.files[i].size = Utils.get_size(this.files[i].size)
-            this.files[i].upload_time = Utils.format_time(this.files[i].upload_time)
+    uploadSuccess(){
+      this.draw.enable = false
+      ElMessage.success("文件上传成功")
+      Api.get_files(this.selected_work_id).then((resp)=>{
+        this.files = resp
+        this.files.sort((a,b)=>{if (a.upload_time <= b.upload_time){return 1}else {return -1}})
+        for (let i = 0; i < this.files.length; i++) {
+          this.files[i].size = Utils.get_size(this.files[i].size)
+          this.files[i].upload_time = Utils.format_time(this.files[i].upload_time)
+        }
 
-          }
-          return false
-        })
       })
+    },
+    beforeUpload: function (file) {
+      this.draw.enable = true
+      this.draw.file_name = file.name
+    },
+    upload:async function (evt) {
+      this.draw.pro = parseInt(evt.percent)
     }
   }
 }
 </script>
 
-
-<script>
-
-</script>
 
 <style scoped>
 .header{

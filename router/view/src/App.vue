@@ -16,7 +16,7 @@
       >
         <el-menu-item index="upload">文件上传</el-menu-item>
         <el-menu-item index="token_manager">Token管理</el-menu-item>
-        <el-menu-item index="work_manager">后台管理</el-menu-item>
+        <el-menu-item :disabled="!admin"  index="work_manager">后台管理</el-menu-item>
 
       </el-menu>
 
@@ -42,6 +42,8 @@
 
 
 import Foo from "./views/Foo";
+import Api from "./utils/api";
+
 
 
 
@@ -65,6 +67,7 @@ export default {
         padding: 0,
         width: "200px"
       },
+      admin: false
     }
   },
   methods:{
@@ -78,6 +81,9 @@ export default {
     if (window.innerWidth<600){
       this.aside_width.width = "0px"
     }
+    Api.check_token().then(data =>{
+      this.admin = data.code === 200;
+    })
   }
 }
 

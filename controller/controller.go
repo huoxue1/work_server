@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"encoding/base64"
-	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -29,12 +27,14 @@ func SetToken(token string) {
 func Upload() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		p := new(pojo.Files)
-		err := context.BindJSON(p)
-		if err != nil {
-			return
-		}
-		content := p.Data
-		p.Data = ""
+		file, _ := context.FormFile("file")
+		tempID, _ := context.GetPostForm("work_id")
+		workId, _ := strconv.Atoi(tempID)
+		token, _ := context.GetPostForm("token")
+		p.WorkID = workId
+		p.Size = file.Size
+		p.FileName = file.Filename
+		p.Token = token
 		db := dao.GetDB()
 		p2 := new(pojo.Files)
 		session := db.NewSession()
@@ -72,20 +72,19 @@ func Upload() gin.HandlerFunc {
 			session.Rollback()
 			return
 		}
-		data, err := base64.StdEncoding.DecodeString(content)
-		if err != nil {
-			session.Rollback()
-			return
-		}
+
 		util.CheckDir("./work/" + w.Name + "/")
-		err = os.WriteFile("./work/"+w.Name+"/"+p.FileName, data, 0666)
+		err = context.SaveUploadedFile(file, "./work/"+w.Name+"/"+p.FileName)
 		if err != nil {
+			context.JSON(403, ok(403, "文件保存失败"))
 			session.Rollback()
 			return
 		}
+
 		err = session.Commit()
 		if err != nil {
 			session.Rollback()
+			context.JSON(403, ok(403, "事务提交失败"))
 			return
 		}
 		context.JSON(200, ok(200, nil))
