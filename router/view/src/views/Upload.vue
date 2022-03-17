@@ -2,14 +2,13 @@
 <div style="width: 100%;height: 100%;border: #42b983 1px solid">
   <div class="header">
       <span style="float: left">请选择上传位置：</span>
-      <el-select style="float: left" v-model="selected_work_id">
+      <el-select style="float: left" placeholder="请选择上传位置" v-model="selected_work_id">
         <el-option
         v-for="work in works"
         :key="work.id"
         :value="work.id"
         :label="work.name"
         >
-
         </el-option>
       </el-select>
     <el-upload
@@ -22,7 +21,7 @@
     >
       <el-button type="success" @click="upload">点击上传文件</el-button>
     </el-upload>
-    <el-drawer :model-value="draw.enable">
+    <el-drawer :model-value="draw.enable" title="上传进度">
       <span>{{this.draw.file_name}}</span>
       <el-progress :percentage="draw.pro"></el-progress>
     </el-drawer>
@@ -32,14 +31,13 @@
   </div>
   <div class="body">
   <el-table :data="files">
-      <el-table-column prop="file_name" label="文件名"/>
-    <el-table-column prop="size" label="文件大小"/>
-    <el-table-column prop="upload_time" label="上次更新时间"/>
-    <el-table-column  label="上次更新时间">
+      <el-table-column prop="file_name" label="fileName"/>
+    <el-table-column prop="size" label="fileSize"/>
+    <el-table-column prop="upload_time" label="uploadTime"/>
+    <el-table-column  label="action">
       <template #default="scope">
         <el-button size="mini" :disabled="scope.row.canRemove" @click="handRemove(scope.row.id)"
         >删除</el-button
-        >
         >
       </template>
     </el-table-column>
@@ -145,12 +143,18 @@ export default {
 
 
 <style scoped>
+
+
+@media screen and (max-width: 500px) {
+  .el-upload{
+    width: 100%;
+  }
+}
+
 .header{
   width: 100%;
   height: 10%;
   border: #42b983 1px solid;
-  padding-left: 20px;
-  padding-top: 10px;
 }
 
 .body{

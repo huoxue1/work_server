@@ -92,6 +92,18 @@ export default {
 
 <style lang="scss">
 
+@media screen and (max-width: 500px) {
+  .el-aside{
+    display: none;
+  }
+  .el-footer{
+    display: none;
+  }
+  .el-header{
+    display: none;
+  }
+}
+
 .menu{
   font-size: 30px;
 }
