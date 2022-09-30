@@ -19,6 +19,7 @@ export default {
   methods:{
     click:function () {
       localStorage.setItem("token",this.token)
+      window.location.reload()
     }
   },
   created() {

@@ -133,6 +133,7 @@ func RemoveFile() gin.HandlerFunc {
  */
 func GetZipResult() gin.HandlerFunc {
 	return func(context *gin.Context) {
+		util.CheckDir("./temp/")
 		workId, b := context.Params.Get("work_id")
 		if !b {
 			return
@@ -148,7 +149,7 @@ func GetZipResult() gin.HandlerFunc {
 		if err != nil {
 			return
 		}
-		context.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s", work.Name+".zip")) //fmt.Sprintf("attachment; filename=%s", filename)对下载的文件重命名
+		context.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s", work.Name+".zip")) // fmt.Sprintf("attachment; filename=%s", filename)对下载的文件重命名
 		context.Writer.Header().Add("Content-Type", "application/octet-stream")
 		context.File("./temp/" + work.Name + ".zip")
 		defer os.Remove("./temp/" + work.Name + ".zip")

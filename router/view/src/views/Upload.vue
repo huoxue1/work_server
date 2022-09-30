@@ -20,6 +20,7 @@
         :data="{'work_id':selected_work_id,'token':token}"
     >
       <el-button type="success" @click="upload">点击上传文件</el-button>
+      <span>上传人数： <span v-text="files.length"></span></span>
     </el-upload>
     <el-drawer :model-value="draw.enable" title="上传进度">
       <span>{{this.draw.file_name}}</span>
@@ -36,8 +37,12 @@
     <el-table-column prop="upload_time" label="uploadTime"/>
     <el-table-column  label="action">
       <template #default="scope">
-        <el-button size="mini" :disabled="scope.row.canRemove" @click="handRemove(scope.row.id)"
+        <el-button size="mini" :disabled="!is_admin ? scope.row.token !== this.token : false" type="danger" @click="handRemove(scope.row.id)"
         >删除</el-button
+        >
+
+        <el-button size="mini" :disabled="!is_admin ? scope.row.token !== this.token : false" @click="handDownload(scope.row.id,scope.row.file_name)"
+        >下载</el-button
         >
       </template>
     </el-table-column>
@@ -50,7 +55,7 @@
 <script>
 import Api from "../utils/api";
 import Utils from "../utils/utils";
-import {ElMessage} from "element-plus";
+import {ElMessage, ElMessageBox} from "element-plus";
 
 export default {
   name: "Upload",
@@ -63,6 +68,7 @@ export default {
       link:"/admin/get_zip_result/"+this.selected_work_id+"?token="+localStorage.getItem("token"),
       token:"",
       base: Api.base,
+      is_admin:false,
 
       draw:{
         file_name: "",
@@ -79,7 +85,6 @@ export default {
         console.log(data)
         this.selected_work.end_time = Utils.format_time(this.selected_work.end_time,true)
       })
-
       Api.get_files(this.selected_work_id).then((resp)=>{
         this.files = resp
         this.files.sort((a,b)=>{if (a.upload_time <= b.upload_time){return 1}else {return -1}})
@@ -93,6 +98,10 @@ export default {
   created() {
     console.log(Api.base)
     this.token = Api.get_token()
+    Api.check_token().then(resp => {
+      this.is_admin = resp.code === 200
+      console.log(this.is_admin)
+    })
     Api.get_works().then((data)=>{
       this.works = data
       this.selected_work_id = data[0].id
@@ -112,14 +121,26 @@ export default {
   },
   methods:{
     handRemove(id){
-      Api.handRemove(id,Api.get_token())
+      ElMessageBox.confirm('你确定要删除吗?', '警告！',{confirmButtonText:"确认",cancelButtonText:"取消",type:"warning"}).then(()=>{
+        Api.handRemove(id,Api.get_token()).then(() => {
+          this.flush_files()
+        })
+      }).catch(()=>{
+
+      })
+
+    },
+    handDownload(id,file_name){
+      let  a = document.createElement("a")
+      a.href = Api.base+`/public/download/${this.selected_work_id}/${id}?token=${Api.get_token()}`
+      a.download = file_name
+      console.log(file_name)
+      a.click()
     },
     click:function () {
       alert(1)
     },
-    uploadSuccess(){
-      this.draw.enable = false
-      ElMessage.success("文件上传成功")
+    flush_files(){
       Api.get_files(this.selected_work_id).then((resp)=>{
         this.files = resp
         this.files.sort((a,b)=>{if (a.upload_time <= b.upload_time){return 1}else {return -1}})
@@ -129,6 +150,11 @@ export default {
         }
 
       })
+    },
+    uploadSuccess(){
+      this.draw.enable = false
+      ElMessage.success("文件上传成功")
+      this.flush_files()
     },
     beforeUpload: function (file) {
       this.draw.enable = true

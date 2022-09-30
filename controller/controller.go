@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -128,6 +129,32 @@ func GetWork() gin.HandlerFunc {
 			Data:  work,
 			Error: "",
 		})
+	}
+}
+
+func DownloadFile() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		fileId, _ := ctx.Params.Get("file_id")
+		workId, _ := ctx.Params.Get("work_id")
+		fileID, _ := strconv.Atoi(fileId)
+		workID, _ := strconv.Atoi(workId)
+		token := ctx.Query("token")
+		file := new(pojo.Files)
+		_, err := dao.GetDB().ID(fileID).Get(file)
+		if err != nil {
+			return
+		}
+		if token != TOKEN && token != file.Token {
+			ctx.JSON(401, gin.H{"code": 401})
+			return
+		}
+		work := new(pojo.Work)
+		_, err = dao.GetDB().ID(workID).Get(work)
+		if err != nil {
+			return
+		}
+		ctx.Header("content-disposition", "attachment;filename="+file.FileName)
+		ctx.File(fmt.Sprintf("./work/%s/%s", work.Name, file.FileName))
 	}
 }
 
