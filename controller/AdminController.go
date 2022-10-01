@@ -113,7 +113,8 @@ func RemoveFile() gin.HandlerFunc {
 			session.Rollback()
 			return
 		}
-		err = os.Remove("./work/" + work.Name + "/" + file.FileName)
+
+		err = os.RemoveAll("./work/" + work.Name + "/" + file.FileName)
 		if err != nil {
 			session.Rollback()
 			return
@@ -145,7 +146,7 @@ func GetZipResult() gin.HandlerFunc {
 		if err != nil {
 			return
 		}
-		err = util.Zip("./work/"+work.Name+"/", "./temp/"+work.Name+".zip")
+		err = util.Compress("./work/"+work.Name+"/", "./temp/"+work.Name+".zip")
 		if err != nil {
 			return
 		}

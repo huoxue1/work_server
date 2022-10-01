@@ -2,7 +2,10 @@ package controller
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -20,6 +23,148 @@ func SetToken(token string) {
 	TOKEN = token
 }
 
+func uploadFile(context *gin.Context) {
+	p := new(pojo.Files)
+	file, _ := context.FormFile("file")
+	tempID, _ := context.GetPostForm("work_id")
+	workId, _ := strconv.Atoi(tempID)
+	token, _ := context.GetPostForm("token")
+	p.WorkID = workId
+	p.Size = file.Size
+	p.FileName = file.Filename
+	p.Token = token
+	db := dao.GetDB()
+	p2 := new(pojo.Files)
+	session := db.NewSession()
+	defer session.Close()
+	defer func() {
+		err := recover()
+		if err != nil {
+			_ = session.Rollback()
+		}
+	}()
+	exist, err := session.Where("work_id=? and file_name=?", p.WorkID, p.FileName).Exist(p2)
+	if exist {
+		_, err := session.Where("work_id=? and file_name=?", p.WorkID, p.FileName).Get(p2)
+		if err != nil {
+			session.Rollback()
+			return
+		}
+		_, err = session.ID(p2.Id).Update(p)
+		if err != nil {
+			session.Rollback()
+			log.Errorln(err.Error())
+			return
+		}
+	} else {
+		_, err = session.Insert(p)
+		if err != nil {
+			session.Rollback()
+			return
+		}
+	}
+
+	w := new(pojo.Work)
+	_, err = session.ID(p.WorkID).Get(w)
+	if err != nil {
+		session.Rollback()
+		return
+	}
+
+	util.CheckDir("./work/" + w.Name + "/")
+	err = context.SaveUploadedFile(file, "./work/"+w.Name+"/"+p.FileName)
+	if err != nil {
+		context.JSON(403, ok(403, "文件保存失败"))
+		session.Rollback()
+		return
+	}
+
+	err = session.Commit()
+	if err != nil {
+		session.Rollback()
+		context.JSON(403, ok(403, "事务提交失败"))
+		return
+	}
+	context.JSON(200, ok(200, nil))
+}
+
+func uploadDir(context *gin.Context) {
+	p := new(pojo.Files)
+	form, _ := context.MultipartForm()
+	files := form.File["file"]
+	fileNames := strings.Split(context.PostForm("fileNames"), ",")
+	fileName := strings.Split(fileNames[0], "/")[0]
+	var fileSize int64 = 0
+	for i, file := range files {
+		fileSize += file.Size
+		file.Filename = fileNames[i]
+	}
+	tempID, _ := context.GetPostForm("work_id")
+	workId, _ := strconv.Atoi(tempID)
+	token, _ := context.GetPostForm("token")
+	p.WorkID = workId
+	p.Size = fileSize
+	p.FileName = fileName
+	p.Token = token
+	db := dao.GetDB()
+	p2 := new(pojo.Files)
+	session := db.NewSession()
+	defer session.Close()
+	defer func() {
+		err := recover()
+		if err != nil {
+			_ = session.Rollback()
+		}
+	}()
+	exist, err := session.Where("work_id=? and file_name=?", p.WorkID, p.FileName).Exist(p2)
+	if exist {
+		_, err := session.Where("work_id=? and file_name=?", p.WorkID, p.FileName).Get(p2)
+		if err != nil {
+			session.Rollback()
+			return
+		}
+		_, err = session.ID(p2.Id).Update(p)
+		if err != nil {
+			session.Rollback()
+			log.Errorln(err.Error())
+			return
+		}
+	} else {
+		_, err = session.Insert(p)
+		if err != nil {
+			session.Rollback()
+			return
+		}
+	}
+
+	w := new(pojo.Work)
+	_, err = session.ID(p.WorkID).Get(w)
+	if err != nil {
+		session.Rollback()
+		return
+	}
+
+	util.CheckDir("./work/" + w.Name + "/")
+	for _, file := range files {
+		s := "./work/" + w.Name + "/" + file.Filename
+		_ = os.MkdirAll(filepath.Dir(s), os.ModePerm)
+		err := context.SaveUploadedFile(file, s)
+		if err != nil {
+			context.JSON(403, ok(403, "文件保存失败"))
+			session.Rollback()
+			return
+		}
+	}
+
+	err = session.Commit()
+	if err != nil {
+		session.Rollback()
+		context.JSON(403, ok(403, "事务提交失败"))
+		return
+	}
+	context.JSON(200, ok(200, nil))
+}
+
 // Upload
 /**
  * @Description: 上传文件
@@ -27,68 +172,13 @@ func SetToken(token string) {
  */
 func Upload() gin.HandlerFunc {
 	return func(context *gin.Context) {
-		p := new(pojo.Files)
-		file, _ := context.FormFile("file")
-		tempID, _ := context.GetPostForm("work_id")
-		workId, _ := strconv.Atoi(tempID)
-		token, _ := context.GetPostForm("token")
-		p.WorkID = workId
-		p.Size = file.Size
-		p.FileName = file.Filename
-		p.Token = token
-		db := dao.GetDB()
-		p2 := new(pojo.Files)
-		session := db.NewSession()
-		defer session.Close()
-		defer func() {
-			err := recover()
-			if err != nil {
-				_ = session.Rollback()
-			}
-		}()
-		exist, err := session.Where("work_id=? and file_name=?", p.WorkID, p.FileName).Exist(p2)
-		if exist {
-			_, err := session.Where("work_id=? and file_name=?", p.WorkID, p.FileName).Get(p2)
-			if err != nil {
-				session.Rollback()
-				return
-			}
-			_, err = session.ID(p2.Id).Update(p)
-			if err != nil {
-				session.Rollback()
-				log.Errorln(err.Error())
-				return
-			}
+		fileType, _ := context.GetPostForm("type")
+		if fileType == "file" {
+			uploadFile(context)
 		} else {
-			_, err = session.Insert(p)
-			if err != nil {
-				session.Rollback()
-				return
-			}
+			uploadDir(context)
 		}
 
-		w := new(pojo.Work)
-		_, err = session.ID(p.WorkID).Get(w)
-		if err != nil {
-			session.Rollback()
-			return
-		}
-
-		util.CheckDir("./work/" + w.Name + "/")
-		err = context.SaveUploadedFile(file, "./work/"+w.Name+"/"+p.FileName)
-		if err != nil {
-			context.JSON(403, ok(403, "文件保存失败"))
-			session.Rollback()
-			return
-		}
-
-		err = session.Commit()
-		if err != nil {
-			session.Rollback()
-			context.JSON(403, ok(403, "事务提交失败"))
-			return
-		}
-		context.JSON(200, ok(200, nil))
 	}
 }
 
@@ -154,7 +244,16 @@ func DownloadFile() gin.HandlerFunc {
 			return
 		}
 		ctx.Header("content-disposition", "attachment;filename="+file.FileName)
-		ctx.File(fmt.Sprintf("./work/%s/%s", work.Name, file.FileName))
+		path := fmt.Sprintf("./work/%s/%s", work.Name, file.FileName)
+		info, _ := os.Stat(path)
+		if info.IsDir() {
+			_ = util.Compress(path, "./temp/"+file.FileName+".zip")
+			ctx.File("./temp/" + file.FileName + ".zi[")
+			defer os.Remove("./temp/" + file.FileName + ".zip")
+		} else {
+			ctx.File(path)
+		}
+
 	}
 }
 

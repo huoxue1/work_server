@@ -29,7 +29,7 @@
         <router-view/>
       </el-main>
       <el-footer class="bor">
-        <Foo/>
+        <Foo :disabled="admin"/>
 
       </el-footer>
     </el-container>
@@ -143,7 +143,7 @@ body {
 }
 
 .bor{
-  border: #42b983 1px solid;
+
 }
 
 

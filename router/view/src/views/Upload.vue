@@ -1,35 +1,47 @@
 <template>
-<div style="width: 100%;height: 100%;border: #42b983 1px solid">
-  <div class="header">
+<div style="width: 100%;height: 100%;">
+  <div class="header" style="width: 100%;margin-top: 20px">
+    <div style="width: 30%;float: left">
       <span style="float: left">请选择上传位置：</span>
       <el-select style="float: left" placeholder="请选择上传位置" v-model="selected_work_id">
         <el-option
-        v-for="work in works"
-        :key="work.id"
-        :value="work.id"
-        :label="work.name"
+            v-for="work in works"
+            :key="work.id"
+            :value="work.id"
+            :label="work.name"
         >
         </el-option>
       </el-select>
-    <el-upload
-        :action="base+'/public/upload'"
-        :auto-upload="true"
-        :on-success="uploadSuccess"
-        :on-progress="upload"
-        :before-upload="beforeUpload"
-        :data="{'work_id':selected_work_id,'token':token}"
-    >
-      <el-button type="success" @click="upload">点击上传文件</el-button>
-      <span>上传人数： <span v-text="files.length"></span></span>
-    </el-upload>
-    <el-drawer :model-value="draw.enable" title="上传进度">
-      <span>{{this.draw.file_name}}</span>
-      <el-progress :percentage="draw.pro"></el-progress>
-    </el-drawer>
+    </div>
+    <div style="width: 15%;float:left;">
+      <el-upload
+          :action="base+'/public/upload'"
+          :auto-upload="true"
+          :on-success="uploadSuccess"
+          :on-progress="upload"
+          :before-upload="beforeUpload"
+          :data="{'work_id':selected_work_id,'token':token,'type':'file'}"
+      >
+        <el-button type="success" @click="upload">点击上传文件</el-button>
+
+      </el-upload>
+
+    </div>
+    <div style="width: 15%;float: left">
+      <el-button type="success" @click="uploadDir">点击上传文件夹</el-button>
+    </div>
 
 
-    <div style="float: right;margin-right: 100px">截至时间<el-link :href="link">：</el-link><span v-text="selected_work.end_time"></span></div>
+    <div style="width: 30%;float: right">
+      <div style="float: left;margin-right: 100px">截至时间<el-link :href="link">：</el-link><span style="color: red" v-text="selected_work.end_time"></span></div>
+      <span style="float:left;">上传人数： <span style="color: red" v-text="files.length"></span>人</span>
+    </div>
+
   </div>
+  <el-drawer :model-value="draw.enable" title="上传进度">
+    <span>{{this.draw.file_name}}</span>
+    <el-progress :percentage="draw.pro"></el-progress>
+  </el-drawer>
   <div class="body">
   <el-table :data="files">
       <el-table-column prop="file_name" label="fileName"/>
@@ -55,10 +67,13 @@
 <script>
 import Api from "../utils/api";
 import Utils from "../utils/utils";
+import axios from "axios";
+
 import {ElMessage, ElMessageBox} from "element-plus";
 
 export default {
   name: "Upload",
+  components: {},
   data(){
     return{
       works:[],
@@ -120,6 +135,35 @@ export default {
     })
   },
   methods:{
+    uploadDir(){
+      let dir = document.createElement("input")
+      dir.webkitdirectory = true
+      dir.type = "file"
+      dir.ref = "file"
+      dir.onchange = ()=>{
+        let form = new FormData();
+        let fileNames = [];
+        for (let i = 0; i < dir.files.length; i++) {
+          let f = dir.files.item(i)
+          form.append("file",f)
+          fileNames.push(f.webkitRelativePath)
+        }
+        form.set("fileNames",fileNames.join(","))
+        form.set("work_id",this.selected_work_id)
+        form.set("token",Api.get_token())
+        form.set("type","dir")
+        axios.post(Api.base+"/public/upload",form,{headers:{ "Content-Type": "multipart/form-data" },onUploadProgress:(e)=>{
+            console.log(e)
+        }}).then(resp => {
+          console.log(resp)
+        })
+
+      }
+      dir.click()
+    },
+    changesData(){
+      console.log(this.$refs.file.files);
+    },
     handRemove(id){
       ElMessageBox.confirm('你确定要删除吗?', '警告！',{confirmButtonText:"确认",cancelButtonText:"取消",type:"warning"}).then(()=>{
         Api.handRemove(id,Api.get_token()).then(() => {
@@ -177,10 +221,14 @@ export default {
   }
 }
 
+.border_right{
+  border-right: red 2px solid;
+}
+
 .header{
   width: 100%;
   height: 10%;
-  border: #42b983 1px solid;
+  border-bottom: #8592c7 2px solid;
 }
 
 .body{
