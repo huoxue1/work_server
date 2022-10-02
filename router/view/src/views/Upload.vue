@@ -153,10 +153,14 @@ export default {
         form.set("token",Api.get_token())
         form.set("type","dir")
         axios.post(Api.base+"/public/upload",form,{headers:{ "Content-Type": "multipart/form-data" },onUploadProgress:(e)=>{
-            console.log(e)
+            this.draw.enable = true
+            this.draw.file_name = fileNames[0].split('/')[0]
+            this.draw.pro = ((e.loaded/e.total)*100).toFixed(2).valueOf()
         }}).then(resp => {
           console.log(resp)
-        })
+          this.flush_files()
+          this.draw.enable = false
+        }).catch(()=>{this.draw.enable = false})
 
       }
       dir.click()
