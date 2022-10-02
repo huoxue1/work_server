@@ -40,6 +40,13 @@ module.exports = {
         return resp.data
     },
 
+    renameFile: async function (work_id,file_id,newName){
+        let form = new FormData()
+        form.set("new_name",newName)
+        let resp = await axios.post(this.base+"/public/rename/"+work_id+"/"+file_id+"?token="+this.get_token(),form)
+        return resp.data
+    },
+
     create_work:async function(data){
         let resp = await axios.post(this.base+"/admin/create_work?token="+this.get_token(),data)
         return resp.data

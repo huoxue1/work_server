@@ -232,6 +232,7 @@ func DownloadFile() gin.HandlerFunc {
 		file := new(pojo.Files)
 		_, err := dao.GetDB().ID(fileID).Get(file)
 		if err != nil {
+			ctx.JSON(503, gin.H{"code": 503, "err": err.Error()})
 			return
 		}
 		if token != TOKEN && token != file.Token {
@@ -241,6 +242,7 @@ func DownloadFile() gin.HandlerFunc {
 		work := new(pojo.Work)
 		_, err = dao.GetDB().ID(workID).Get(work)
 		if err != nil {
+			ctx.JSON(503, gin.H{"code": 503, "err": err.Error()})
 			return
 		}
 		ctx.Header("content-disposition", "attachment;filename="+file.FileName)
@@ -254,6 +256,47 @@ func DownloadFile() gin.HandlerFunc {
 			ctx.File(path)
 		}
 
+	}
+}
+
+func RenameFile() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		fileId, _ := ctx.Params.Get("file_id")
+		workId, _ := ctx.Params.Get("work_id")
+		fileID, _ := strconv.Atoi(fileId)
+		workID, _ := strconv.Atoi(workId)
+		token := ctx.Query("token")
+		newName := ctx.PostForm("new_name")
+		file := new(pojo.Files)
+		_, err := dao.GetDB().ID(fileID).Get(file)
+		if err != nil {
+			ctx.JSON(503, gin.H{"code": 503, "err": err.Error()})
+			return
+		}
+		if token != TOKEN && token != file.Token {
+			ctx.JSON(401, gin.H{"code": 401})
+			return
+		}
+		work := new(pojo.Work)
+		_, err = dao.GetDB().ID(workID).Get(work)
+		if err != nil {
+			ctx.JSON(503, gin.H{"code": 503, "err": err.Error()})
+			return
+		}
+		path := fmt.Sprintf("./work/%v/%v", work.Name, file.FileName)
+		err = os.Rename(path, fmt.Sprintf("./work/%v/%v", work.Name, newName))
+		if err != nil {
+			ctx.JSON(503, gin.H{"code": 503, "err": err.Error()})
+			log.Errorln(err.Error())
+			return
+		}
+		file.FileName = newName
+		_, err = dao.GetDB().ID(fileID).Update(file)
+		if err != nil {
+			ctx.JSON(503, gin.H{"code": 503, "err": err.Error()})
+			return
+		}
+		ctx.JSON(200, gin.H{"code": 200})
 	}
 }
 

@@ -44,16 +44,18 @@
   </el-drawer>
   <div class="body">
   <el-table :data="files">
-      <el-table-column prop="file_name" label="fileName"/>
-    <el-table-column prop="size" label="fileSize"/>
-    <el-table-column prop="upload_time" label="uploadTime"/>
-    <el-table-column  label="action">
+      <el-table-column sortable  prop="file_name" label="文件名"/>
+    <el-table-column sortable prop="size" label="文件大小"/>
+    <el-table-column sortable prop="upload_time" label="上传时间"/>
+    <el-table-column  label="">
       <template #default="scope">
         <el-button size="mini" :disabled="!is_admin ? scope.row.token !== this.token : false" type="danger" @click="handRemove(scope.row.id)"
         >删除</el-button
         >
-
-        <el-button size="mini" :disabled="!is_admin ? scope.row.token !== this.token : false" @click="handDownload(scope.row.id,scope.row.file_name)"
+        <el-button size="mini" type="warning" :disabled="!is_admin ? scope.row.token !== this.token : false" @click="handleRename(scope.row.id,scope.row.file_name)"
+        >重命名</el-button
+        >
+        <el-button size="mini" type="info" :disabled="!is_admin ? scope.row.token !== this.token : false" @click="handDownload(scope.row.id,scope.row.file_name)"
         >下载</el-button
         >
       </template>
@@ -164,6 +166,20 @@ export default {
 
       }
       dir.click()
+    },
+
+    handleRename(file_id,file_name){
+      ElMessageBox.prompt("请输入更改后的文件名","输入",{cancelButtonText:"退出",confirmButtonText:"确认",inputValue:file_name}).then(value => {
+        if (value.value === ""){
+          return
+        }
+        Api.renameFile(this.selected_work_id,file_id,value.value).then(() => {
+          ElMessage.success({message:"修改成功"})
+          this.flush_files()
+        }).catch(err => {
+          ElMessage.error({message:err})
+        })
+      })
     },
     changesData(){
       console.log(this.$refs.file.files);

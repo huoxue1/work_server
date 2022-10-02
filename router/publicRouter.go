@@ -14,4 +14,5 @@ func publicRouter(group *gin.RouterGroup) {
 	group.POST("/get_file/:file_id", controller.GetFile())
 	group.GET("/download/:work_id/:file_id", controller.DownloadFile())
 	group.POST("/remove_file/:file_id", controller.RemoveFile())
+	group.POST("/rename/:work_id/:file_id", controller.RenameFile())
 }

@@ -6,6 +6,11 @@ For example, to overwrite the theme color:
 $--color-primary: hotpink;
 
 /* icon font path, required */
-$--font-path: '~element-plus/lib/theme-chalk/fonts';
+//$--font-path: '~element-plus/lib/theme-chalk/fonts';
 
-@import "~element-plus/packages/theme-chalk/src/index";
+//@import "~element-plus/packages/theme-chalk/src/index";
+
+// 导入messageBox的css样式
+@import "~element-plus/packages/theme-chalk/src/message-box";
+// 导入Message的css样式
+@import "~element-plus/packages/theme-chalk/src/message";
