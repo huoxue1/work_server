@@ -249,9 +249,9 @@ func DownloadFile() gin.HandlerFunc {
 		path := fmt.Sprintf("./work/%s/%s", work.Name, file.FileName)
 		info, _ := os.Stat(path)
 		if info.IsDir() {
-			_ = util.Compress(path, "./temp/"+file.FileName+".zip")
+			_ = util.Compress(path+"/", "./temp/"+file.FileName+".zip")
 			ctx.File("./temp/" + file.FileName + ".zip")
-			defer os.Remove("./temp/" + file.FileName + ".zip")
+			//	defer os.Remove("./temp/" + file.FileName + ".zip")
 		} else {
 			ctx.File(path)
 		}
