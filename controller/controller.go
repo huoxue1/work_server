@@ -250,7 +250,7 @@ func DownloadFile() gin.HandlerFunc {
 		info, _ := os.Stat(path)
 		if info.IsDir() {
 			_ = util.Compress(path, "./temp/"+file.FileName+".zip")
-			ctx.File("./temp/" + file.FileName + ".zi[")
+			ctx.File("./temp/" + file.FileName + ".zip")
 			defer os.Remove("./temp/" + file.FileName + ".zip")
 		} else {
 			ctx.File(path)
